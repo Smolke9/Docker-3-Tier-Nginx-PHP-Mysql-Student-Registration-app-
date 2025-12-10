@@ -17,7 +17,7 @@ The stack:
 - **mysql:8.0** — database (on `backend` network), initialized using `mysql-init/init.sql`
 
 ---
-
+![Project Screenshot](/screenshot/diagram.png)
 ## Host folder layout
 
 You should create the following folder structure on the Ubuntu host (example: `~/student-app`):
@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS students (
 ```
 
 ---
+![Project Screenshot](/screenshot/1.png)
 
 ## Step-by-step Docker commands (manual)
 
@@ -154,7 +155,7 @@ CREATE TABLE IF NOT EXISTS students (
 docker network create frontend
 docker network create backend
 ```
-
+![Project Screenshot](/screenshot/2.png)
 ### 2) Start MySQL container (on backend)
 ```bash
 docker run -d \
@@ -195,13 +196,15 @@ docker run -d \
 ```
 
 ---
-
+![Project Screenshot](/screenshot/3.png)
 ## Verify & Test
 
-1. Visit `http://<SERVER_IP>/` in your browser.  
-2. Fill in the form and submit.  
-3. Check MySQL data:
-
+1. Visit `http://<SERVER_IP>/` in your browser.
+![Project Screenshot](/screenshot/4.png)
+3. Fill in the form and submit.
+![Project Screenshot](/screenshot/5.png) 
+5. Check MySQL data:
+![Project Screenshot](/screenshot/6.png)
 ```bash
 docker exec -it mysql mysql -u root -p
 # password: rootpass123
