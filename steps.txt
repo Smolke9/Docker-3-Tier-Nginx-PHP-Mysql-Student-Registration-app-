@@ -1,0 +1,157 @@
+# update packages
+sudo apt update && sudo apt upgrade -y
+
+# install docker and docker-compose (if not already)
+sudo apt install -y docker.io docker-compose
+
+# enable & start docker
+sudo systemctl enable --now docker
+
+# allow your user to run docker (logout/login needed)
+sudo usermod -aG docker $USER
+
+~/student-app/
+├── www/
+│   ├── index.html
+│   ├── register.php
+│   └── db.php
+├── nginx/
+│   └── default.conf
+└── mysql-init/
+    └── init.sql
+
+✅ STEP 1 – Create Required Files
+👉 1) index.html
+
+nano ~/student-app/www/index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Register</title>
+</head>
+<body>
+<h2>Student Registration</h2>
+<form action="register.php" method="POST">
+    Name: <input type="text" name="fullname" required><br><br>
+    Email: <input type="email" name="email" required><br><br>
+    Roll No: <input type="text" name="roll" required><br><br>
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>
+
+👉 2) db.php
+
+nano ~/student-app/www/db.php
+
+<?php
+$mysqli = new mysqli("mysql", "studentuser", "studentpass", "studentdb");
+
+if ($mysqli->connect_error) {
+    die("DB Connection failed: " . $mysqli->connect_error);
+}
+?>
+
+👉 3) register.php
+
+nano ~/student-app/www/register.php
+
+<?php
+require "db.php";
+
+$fullname = $_POST['fullname'];
+$email = $_POST['email'];
+$roll = $_POST['roll'];
+
+$stmt = $mysqli->prepare("INSERT INTO students(fullname,email,roll) VALUES (?,?,?)");
+$stmt->bind_param("sss", $fullname, $email, $roll);
+
+if ($stmt->execute()) {
+    echo "Student Registered Successfully!";
+} else {
+    echo "Error: " . $stmt->error;
+}
+?>
+
+👉 4) MySQL init.sql
+
+nano ~/student-app/mysql-init/init.sql
+
+CREATE DATABASE IF NOT EXISTS studentdb;
+
+CREATE USER IF NOT EXISTS 'studentuser'@'%' IDENTIFIED BY 'studentpass';
+GRANT ALL PRIVILEGES ON studentdb.* TO 'studentuser'@'%';
+FLUSH PRIVILEGES;
+
+USE studentdb;
+
+CREATE TABLE IF NOT EXISTS students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  fullname VARCHAR(255),
+  email VARCHAR(255),
+  roll VARCHAR(255)
+);
+
+👉 5) nginx/default.conf
+
+nano ~/student-app/nginx/default.conf
+
+server {
+    listen 80;
+    root /var/www/html;
+    index index.html index.php;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass php-fpm:9000;
+        fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+    }
+}
+
+✅ STEP 2 – Create Docker Networks
+
+Two networks are required:
+
+docker network create frontend
+docker network create backend
+
+
+✅ STEP 3 – Run MySQL Container
+docker run -d \
+  --name mysql \
+  --network backend \
+  -e MYSQL_ROOT_PASSWORD=rootpass123 \
+  -v ~/student-app/mysql-data:/var/lib/mysql \
+  -v ~/student-app/mysql-init:/docker-entrypoint-initdb.d \
+  mysql:8.0
+
+
+✅ STEP 4 — Create NEW PHP container WITH mysqli installed
+
+Run this:
+
+docker run -d \
+  --name php-fpm \
+  -v ~/student-app/www:/var/www/html \
+  php:8.1-fpm bash -c "docker-php-ext-install mysqli && php-fpm"
+
+
+✅ STEP 5 — connect Networks
+docker network connect frontend php-fpm
+docker network connect backend php-fpm
+
+✅ STEP 6 – Run Nginx Container
+docker run -d \
+  --name nginx \
+  --network frontend \
+  -p 80:80 \
+  -v ~/student-app/www:/var/www/html:ro \
+  -v ~/student-app/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro \
+  nginx
+
+

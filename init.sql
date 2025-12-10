@@ -1,0 +1,15 @@
+-- mysql-init/init.sql
+CREATE DATABASE IF NOT EXISTS studentdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'studentuser'@'%' IDENTIFIED BY 'studentpass';
+GRANT ALL PRIVILEGES ON studentdb.* TO 'studentuser'@'%';
+FLUSH PRIVILEGES;
+
+USE studentdb;
+CREATE TABLE IF NOT EXISTS students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  fullname VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  roll VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
