@@ -1,5 +1,5 @@
 
-# Student-App — Docker 3-Tier Manual (Manual `docker run` only)
+# Student-App — Docker 3-Tier
 
 **Author:** Suraj  
 **Project:** Student Registration (Nginx + PHP-FPM + MySQL)  
